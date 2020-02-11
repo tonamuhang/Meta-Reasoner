@@ -2,19 +2,30 @@ package space;
 
 import java.util.*;
 
+/**
+ * World wraps a map object from local maps(Nodes) to their connected local maps(Nodes)
+ */
 public class World {
 
     private static World world = null;
     private int node_num;
 
+    // Singleton instance of the world map
     public Map<Local, List<Local>> world_map;
 
+    /**
+     * Constructor singleton
+     */
     private World(){
         this.world_map = new HashMap<>();
         this.node_num = 0;
     }
 
 
+    /**
+     * Used to get the unique instance of the world map
+     * @return an instance of the world map
+     */
     public static World getWorld(){
         if(world == null){
             world = new World();
@@ -23,6 +34,10 @@ public class World {
     }
 
 
+    /**
+     * Add a local map(Node) to the world map.
+     * @param local_map the local map node
+     */
     public void addNode(Local local_map){
         local_map.id = "" + this.node_num;
         world_map.put(local_map, new LinkedList<Local>());
@@ -30,7 +45,27 @@ public class World {
     }
 
 
-    // Build an edge between two LocalMap nodes.
+    /**
+     * Get the node of a local map
+     * @param id a unique identifier for a local map node
+     * @return the local map node corresponding to the given id
+     */
+    public Local getNode(String id){
+        for(Local local : this.world_map.keySet()){
+            if(local.id.equals(id)){
+                return local;
+            }
+        }
+        return null;
+    }
+
+
+    /**
+     * Build an edge between two LocalMap nodes.
+     * @param head The starting node
+     * @param tail The ending node
+     * @param bi Indicates if the edge should be bidirectional
+     */
     public void addEdge(Local head, Local tail, boolean bi){
         if(!world_map.containsKey(head)){
             addNode(head);
@@ -47,7 +82,15 @@ public class World {
     }
 
 
-    // Update a node in the worldmap according to its id
+    // TODO: Delete the edge
+    public void deleteEdge(Local head, Local tail){
+
+    }
+
+    /**
+     * Update a node in the worldmap according to its id
+     * @param node The node with updated information in it
+     */
     public void updateLocal(Local node){
         for(Local local : this.world_map.keySet()){
             if(local.id.equals(node.id)){
