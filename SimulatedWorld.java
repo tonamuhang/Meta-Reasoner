@@ -65,23 +65,17 @@ public class SimulatedWorld extends JPanel{
         Cell[][] simulatedWorld = new Cell[10][10];
 
 
+        JFrame frame = new JFrame("Game");
+        SimulatedWorld map = new SimulatedWorld();
+        frame.add(map);
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.pack();
+        frame.setVisible(true);
 
         Scanner scanner = new Scanner(System.in);
         String direction = "";
         boolean flag = true;
         while(flag){
-            SwingUtilities.invokeLater(new Runnable() {
-                public void run() {
-                    JFrame frame = new JFrame("Game");
-                    SimulatedWorld map = new SimulatedWorld();
-                    frame.add(map);
-                    frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-                    frame.pack();
-                    frame.setVisible(true);
-                }
-            });
-
-
             direction = scanner.nextLine();
             Robot.Movement movement = null;
 
@@ -127,6 +121,7 @@ public class SimulatedWorld extends JPanel{
                 }
 
             }
+            frame.repaint();
         }
     }
 
