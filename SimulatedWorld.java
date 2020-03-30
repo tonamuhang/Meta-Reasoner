@@ -70,6 +70,18 @@ public class SimulatedWorld extends JPanel{
         String direction = "";
         boolean flag = true;
         while(flag){
+            SwingUtilities.invokeLater(new Runnable() {
+                public void run() {
+                    JFrame frame = new JFrame("Game");
+                    SimulatedWorld map = new SimulatedWorld();
+                    frame.add(map);
+                    frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+                    frame.pack();
+                    frame.setVisible(true);
+                }
+            });
+
+
             direction = scanner.nextLine();
             Robot.Movement movement = null;
 
@@ -91,34 +103,47 @@ public class SimulatedWorld extends JPanel{
                     flag = false;
                     break;
             }
+
             if(movement != null) {
-                if(robot.makeMove(movement)){
-                    switch (movement){
-                        case UP:
-                            robot_x+=1;
-                        case RIGHT:
+                if(validateMove(movement) ){
+                    if(robot.makeMove(movement)) {
+                        switch (movement) {
+                            case UP:
+                                robot_x -= 1;
+                                break;
+                            case DOWN:
+                                robot_x += 1;
+                                break;
+                            case RIGHT:
+                                robot_y += 1;
+                                break;
+                            case LEFT:
+                                robot_y -= 1;
+                                break;
+                            default:
+                                break;
+                        }
                     }
                 }
 
             }
-
-            SwingUtilities.invokeLater(new Runnable() {
-                public void run() {
-                    JFrame frame = new JFrame("Game");
-                    SimulatedWorld map = new SimulatedWorld();
-                    frame.add(map);
-                    frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-                    frame.pack();
-                    frame.setVisible(true);
-                }
-            });
-
         }
-
-
-
-
-
     }
+
+    public static boolean validateMove(Robot.Movement movement){
+        switch (movement){
+            case UP:
+                return robot_x > 0;
+            case DOWN:
+                return robot_x < row - 1;
+            case RIGHT:
+                return robot_y < col - 1;
+            case LEFT:
+                return robot_y > 0;
+            default:
+                return false;
+        }
+    }
+
 
 }
