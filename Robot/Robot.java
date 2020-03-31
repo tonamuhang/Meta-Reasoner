@@ -22,6 +22,7 @@ public class Robot {
     JFrame frame = null;
     LocalMapVisual localMapVisual = null;
     private int localMapSize = 5;
+    public int battery = 20;
 
     public Robot(int memory){
         this.memory = memory;
@@ -65,6 +66,9 @@ public class Robot {
 
 
     public boolean validateMove(Movement movement){
+        if(this.battery <= 0){
+            return false;
+        }
         switch (movement){
             case UP:
                 if(this.x>0) {
@@ -144,11 +148,13 @@ public class Robot {
                     this.movements = new LinkedList<>();
                     this.movements.add(Movement.ENTRY);
                     System.out.println("retrieved " + this.localMap.id);
+
+                    this.worldMap.printLocalMapConnection(this.localMap);
                 }
             }
             // If not landmark and within the current localmap, do nothing
 
-
+            this.battery -= 1;
             return true;
         }
         return false;
@@ -164,7 +170,8 @@ public class Robot {
         this.movements.add(Movement.EXIT);
         MapNode start = new MapNode(old_local, this.movements);
         this.worldMap.addNode(start);
-        System.out.println("Added localmap to worldmap " + this.localMap.id);
+        System.out.println("Added localmap " + this.localMap.id + " to worldmap");
+        this.printMovements();
 
         return start;
     }
@@ -195,5 +202,18 @@ public class Robot {
         catch (Exception e){
             System.exit(0);
         }
+    }
+
+    public void printMovements(){
+        StringBuilder sb = new StringBuilder("Moves taken in the localmap: ");
+        for(Movement movement : this.movements){
+            if(movement.toString().equals("ENTRY")){
+                sb.append("ENTRY");
+            }
+            else {
+                sb.append("->").append(movement.toString());
+            }
+        }
+        System.out.println(sb.toString());
     }
 }

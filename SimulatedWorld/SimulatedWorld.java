@@ -11,7 +11,7 @@ import java.util.Scanner;
 
 public class SimulatedWorld extends JPanel{
     public static final Color plain = new Color(255, 255, 255);
-    public static final Color robot = new Color(255, 0, 0);
+    public static final Color robot_color = new Color(255, 0, 0);
     public static final Color battery = new Color(0, 255, 0);
 
     public static int row = 20;
@@ -43,6 +43,7 @@ public class SimulatedWorld extends JPanel{
         super.paintComponent(g);
         g.clearRect(0, 0, getWidth(), getHeight());
 
+
         int width = getWidth()/col;
         int height = getHeight()/row;
 
@@ -53,7 +54,7 @@ public class SimulatedWorld extends JPanel{
                 int y = j * height;
                 Color terrainColor = plain;
                 if(i == robot_x && j == robot_y){
-                    terrainColor = robot;
+                    terrainColor = robot_color;
                 }
                 else if(worldGrid[i][j].containsBattery()){
                     terrainColor = battery;
@@ -63,8 +64,8 @@ public class SimulatedWorld extends JPanel{
                 g.fillRect(y, x, width, height);
             }
         }
-    }
 
+    }
 
 
 
@@ -86,14 +87,26 @@ public class SimulatedWorld extends JPanel{
 
         JFrame frame = new JFrame("Meta");
         SimulatedWorld map = new SimulatedWorld(simulatedWorld);
-        frame.add(map);
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.pack();
-        frame.setVisible(true);
+        LayoutManager overlay = new OverlayLayout(map);
+        map.setLayout(overlay);
+
+
+
 
 
         Robot robot = new Robot(100);
         robot.createLocalMapVisual();
+
+        JLabel battery = new JLabel(""+ robot.battery);
+        battery.setForeground(Color.BLACK);
+        battery.setAlignmentX(0);
+        battery.setAlignmentY(0);
+        map.add(battery);
+
+        frame.add(map);
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.pack();
+        frame.setVisible(true);
 
         Scanner scanner = new Scanner(System.in);
         String direction = "";
@@ -140,6 +153,7 @@ public class SimulatedWorld extends JPanel{
                             default:
                                 break;
                         }
+                        battery.setText(robot.battery+"");
                     }
                 }
 

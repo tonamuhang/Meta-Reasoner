@@ -34,5 +34,18 @@ public class WorldMap {
         return null;
     }
 
+    public void printLocalMapConnection(LocalMap localMap){
+        StringBuilder sb = new StringBuilder(localMap.id);
+        for(MapNode mapNode : this.mapNodes){
+            if(mapNode.id.equals(localMap.id)){
+                for(Edge edge : mapNode.getEdges()){
+                    String end_id = edge.destination.id;
+                    sb.append("->").append(end_id);
+                }
+            }
+        }
+        sb.append("\n");
+        System.out.println(sb.toString());
+    }
 
 }
