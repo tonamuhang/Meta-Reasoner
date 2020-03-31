@@ -26,6 +26,7 @@ public class WorldMap {
 
         for(MapNode mapNode : this.mapNodes){
             if(mapNode.id.equals(id)){
+                mapNode.localMap.reCenter();
                 return mapNode.localMap;
             }
         }

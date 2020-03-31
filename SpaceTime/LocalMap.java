@@ -74,4 +74,15 @@ public class LocalMap {
 
     }
 
+    public void reCenter(){
+        this.x = this.size/2;
+        this.y = this.size/2;
+    }
+
+    public void updateCell(Cell cell){
+        this.localMap[this.x][this.y].addItem(cell.items);
+    }
+
+
+
 }

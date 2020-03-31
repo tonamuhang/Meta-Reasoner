@@ -6,7 +6,6 @@ public class Cell {
     int x, y;
     ArrayList<Item> items = null;
 
-
     public Cell(int x, int y){
         this.x = x;
         this.y = y;
@@ -18,6 +17,23 @@ public class Cell {
             this.items.add(item);
         }
     }
+
+    public void addItem(ArrayList<Item> items){
+        if(this.items != null){
+            this.items.addAll(items);
+        }
+    }
+
+    public boolean containsBattery(){
+        for(Item i : this.items){
+            if(i.id.equals("Battery")){
+                return true;
+            }
+        }
+        return false;
+    }
+
+
 
 
 }

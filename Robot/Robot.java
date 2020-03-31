@@ -1,10 +1,8 @@
 package Robot;
 
-import SpaceTime.Cell;
-import SpaceTime.LocalMap;
-import SpaceTime.MapNode;
-import SpaceTime.WorldMap;
+import SpaceTime.*;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Map;
@@ -15,11 +13,15 @@ public class Robot {
     }
 
     protected boolean[][] virtualMap = null;   // Holds information about localmap landmarks
-    private LocalMap localMap = null;
+    protected LocalMap localMap = null;
     private WorldMap worldMap = null;
     private LinkedList<Movement> movements = null;
     protected int x, y, memory;
     private Sensor sensor = null;
+    private Thread sensorThread = null;
+    JFrame frame = null;
+    LocalMapVisual localMapVisual = null;
+    private int localMapSize = 5;
 
     public Robot(int memory){
         this.memory = memory;
@@ -27,8 +29,8 @@ public class Robot {
         this.x = memory/2;
         this.y = memory/2;
         this.worldMap = new WorldMap();
-        this.sensor = new Sensor();
-        this.sensor.run();
+        this.sensor = new Sensor(this);
+
 
         for(int i = 0; i < memory; i++){
             for(int j = 0; j < memory; j++){
@@ -36,7 +38,10 @@ public class Robot {
             }
         }
 
-        this.buildLocalMap(3);  // Change localMap size here
+        this.buildLocalMap(this.localMapSize);  // Change localMap size here
+
+//        sensorThread = new Thread(this.sensor);
+//        sensorThread.start();
     }
 
 
@@ -114,14 +119,16 @@ public class Robot {
                 default:
                     break;
             }
+            // After making a move, update the information of the cell using sensor
+            this.sensor.run();
 
             boolean is_in_localmap = this.localMap.moveRobot(movement);
             // If is outside of the current localmap, build a new one
-            if(!is_in_localmap){
+            if(!is_in_localmap && !this.virtualMap[x][y]){
                 MapNode start = exitLocalMap();
 
                 // Build a new local map, and connect the two local maps
-                this.buildLocalMap(3);
+                this.buildLocalMap(this.localMapSize);
                 this.virtualMap[x][y] = true;
                 MapNode end = new MapNode(this.localMap, this.movements);
                 this.worldMap.addEdge(start, end);
@@ -140,6 +147,8 @@ public class Robot {
                 }
             }
             // If not landmark and within the current localmap, do nothing
+
+
             return true;
         }
         return false;
@@ -158,5 +167,33 @@ public class Robot {
         System.out.println("Added localmap to worldmap " + this.localMap.id);
 
         return start;
+    }
+
+
+    public void createLocalMapVisual(){
+        this.frame = new JFrame("LocalMap");
+        this.localMapVisual = new LocalMapVisual(this.localMap);
+        frame.add(localMapVisual);
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.pack();
+        frame.setVisible(true);
+    }
+
+    public void localMapVisualRepaint(){
+        this.frame.getContentPane().removeAll();
+        this.frame.add(new LocalMapVisual(this.localMap));
+        frame.pack();
+        this.frame.repaint();
+    }
+
+    public void localMapVisualDispose(){
+        this.frame.setVisible(false);
+        this.frame.dispose();
+        try {
+            this.sensorThread.join();
+        }
+        catch (Exception e){
+            System.exit(0);
+        }
     }
 }

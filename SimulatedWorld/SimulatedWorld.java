@@ -1,5 +1,8 @@
+package SimulatedWorld;
+
 import Robot.Robot;
 import SpaceTime.Cell;
+import SpaceTime.Item;
 
 import javax.swing.*;
 import java.awt.*;
@@ -9,20 +12,25 @@ import java.util.Scanner;
 public class SimulatedWorld extends JPanel{
     public static final Color plain = new Color(255, 255, 255);
     public static final Color robot = new Color(255, 0, 0);
+    public static final Color battery = new Color(0, 255, 0);
 
-    public static final int row = 20;
-    public static final int col = 20;
+    public static int row = 20;
+    public static int col = 20;
     public static final int PREFERRED_GRID_SIZE_PIXELS = 30;
 
-    private  Cell[][] worldGrid = null;
+    private static Cell[][] worldGrid = null;
 
     public static int robot_x = 0;
     public static int robot_y = 0;
 
-    public SimulatedWorld(){
-        this.worldGrid = new Cell[row][col];
-        Random rand = new Random();
+    public SimulatedWorld(Cell[][] worldGrid){
+        SimulatedWorld.worldGrid = worldGrid;
+        row = worldGrid.length;
+        col = worldGrid[0].length;
 
+        Random rand = new Random();
+        robot_x = rand.nextInt(20);
+        robot_y = rand.nextInt(20);
 
         int width = col * PREFERRED_GRID_SIZE_PIXELS;
         int height = row * PREFERRED_GRID_SIZE_PIXELS;
@@ -47,9 +55,12 @@ public class SimulatedWorld extends JPanel{
                 if(i == robot_x && j == robot_y){
                     terrainColor = robot;
                 }
+                else if(worldGrid[i][j].containsBattery()){
+                    terrainColor = battery;
+                }
 
                 g.setColor(terrainColor);
-                g.fillRect(x, y, width, height);
+                g.fillRect(y, x, width, height);
             }
         }
     }
@@ -58,19 +69,31 @@ public class SimulatedWorld extends JPanel{
 
 
     public static void main(String[] args){
+        int worldsize = 20;
 
 
+        // Initialize the cells
+        Cell[][] simulatedWorld = new Cell[worldsize][worldsize];
+        for(int i = 0; i < worldsize; i++){
+            for(int j = 0; j < worldsize; j++){
+                simulatedWorld[i][j] = new Cell(i, j);
+            }
+        }
 
-        Robot robot = new Robot(10);
-        Cell[][] simulatedWorld = new Cell[10][10];
+
+        simulatedWorld[3][0].addItem(new Item(3, 0, "Battery"));
 
 
-        JFrame frame = new JFrame("Game");
-        SimulatedWorld map = new SimulatedWorld();
+        JFrame frame = new JFrame("Meta");
+        SimulatedWorld map = new SimulatedWorld(simulatedWorld);
         frame.add(map);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.pack();
         frame.setVisible(true);
+
+
+        Robot robot = new Robot(100);
+        robot.createLocalMapVisual();
 
         Scanner scanner = new Scanner(System.in);
         String direction = "";
@@ -121,8 +144,14 @@ public class SimulatedWorld extends JPanel{
                 }
 
             }
+            robot.localMapVisualRepaint();
             frame.repaint();
+
         }
+        frame.setVisible(false);
+        frame.dispose();
+        robot.localMapVisualDispose();
+
     }
 
     public static boolean validateMove(Robot.Movement movement){
@@ -138,6 +167,10 @@ public class SimulatedWorld extends JPanel{
             default:
                 return false;
         }
+    }
+
+    public static Cell getCell(){
+        return worldGrid[robot_x][robot_y];
     }
 
 
