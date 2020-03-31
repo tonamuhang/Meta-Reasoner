@@ -24,6 +24,19 @@ public class Cell {
         }
     }
 
+    public void removeItem(Item item){
+        for(Item i : this.items){
+            if(i.id.equals(item.id)){
+                this.items.remove(i);
+                return;
+            }
+        }
+    }
+
+    public void clear(){
+        this.items.clear();
+    }
+
     public boolean containsBattery(){
         for(Item i : this.items){
             if(i.id.equals("Battery")){

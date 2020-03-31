@@ -80,6 +80,7 @@ public class LocalMap {
     }
 
     public void updateCell(Cell cell){
+        this.localMap[x][y].clear();
         this.localMap[this.x][this.y].addItem(cell.items);
     }
 

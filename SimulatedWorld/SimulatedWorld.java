@@ -85,12 +85,15 @@ public class SimulatedWorld extends JPanel{
         /*
          * Modify the simulated map here
          */
-        simulatedWorld[3][0].addItem(new Item(3, 0, "Battery"));
-        simulatedWorld[4][5].addItem(new Item(4, 5, "Battery"));
+        /*-------------------------------------------------------------*/
 
-        /*
-         *
-         */
+        Item battery1 = new Item(3, 0, "Battery");
+        Item battery2 = new Item(4, 5, "Battery");
+        simulatedWorld[3][0].addItem(battery1);
+        simulatedWorld[4][5].addItem(battery2);
+
+        /*-------------------------------------------------------------*/
+
         JFrame frame = new JFrame("Meta");
         SimulatedWorld map = new SimulatedWorld(simulatedWorld);
         LayoutManager overlay = new OverlayLayout(map);
@@ -117,6 +120,7 @@ public class SimulatedWorld extends JPanel{
         Scanner scanner = new Scanner(System.in);
         String direction = "";
         boolean flag = true;
+        int counter = 20;
         while(flag){
             direction = scanner.nextLine();
             Robot.Movement movement = null;
@@ -167,6 +171,11 @@ public class SimulatedWorld extends JPanel{
             robot.localMapVisualRepaint();
             frame.repaint();
 
+            counter -= 1;
+            if(counter == 0){
+                simulatedWorld[3][0].removeItem(battery1);
+                simulatedWorld[7][3].addItem(new Item(7, 3, "Battery"));
+            }
         }
         frame.setVisible(false);
         frame.dispose();
