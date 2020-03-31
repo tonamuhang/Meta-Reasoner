@@ -3,7 +3,7 @@ package SpaceTime;
 import javax.swing.*;
 import java.awt.*;
 
-public class LocalMapVisual extends JPanel {
+public class LocalMapGUI extends JPanel {
     public static final Color plain = new Color(255, 255, 255);
     public static final Color robot = new Color(255, 0, 0);
     public static final Color battery = new Color(0, 255, 0);
@@ -14,7 +14,7 @@ public class LocalMapVisual extends JPanel {
 
     private Cell[][] mapGrid = null;
     private LocalMap localMap = null;
-    public LocalMapVisual(LocalMap localMap){
+    public LocalMapGUI(LocalMap localMap){
         this.localMap = localMap;
         this.mapGrid = localMap.localMap;
         col = this.localMap.size;

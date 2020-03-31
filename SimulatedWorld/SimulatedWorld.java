@@ -82,9 +82,15 @@ public class SimulatedWorld extends JPanel{
         }
 
 
+        /*
+         * Modify the simulated map here
+         */
         simulatedWorld[3][0].addItem(new Item(3, 0, "Battery"));
+        simulatedWorld[4][5].addItem(new Item(4, 5, "Battery"));
 
-
+        /*
+         *
+         */
         JFrame frame = new JFrame("Meta");
         SimulatedWorld map = new SimulatedWorld(simulatedWorld);
         LayoutManager overlay = new OverlayLayout(map);

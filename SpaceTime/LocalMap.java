@@ -83,6 +83,8 @@ public class LocalMap {
         this.localMap[this.x][this.y].addItem(cell.items);
     }
 
-
+    public boolean checkBatteryStation(){
+        return this.localMap[x][y].containsBattery();
+    }
 
 }

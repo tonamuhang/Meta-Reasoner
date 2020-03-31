@@ -3,9 +3,7 @@ package Robot;
 import SpaceTime.*;
 
 import javax.swing.*;
-import java.util.ArrayList;
 import java.util.LinkedList;
-import java.util.Map;
 
 public class Robot {
     public enum Movement{
@@ -20,9 +18,9 @@ public class Robot {
     private Sensor sensor = null;
     private Thread sensorThread = null;
     JFrame frame = null;
-    LocalMapVisual localMapVisual = null;
+    LocalMapGUI localMapGUI = null;
     private int localMapSize = 5;
-    public int battery = 20;
+    public int battery = 100;
 
     public Robot(int memory){
         this.memory = memory;
@@ -126,6 +124,10 @@ public class Robot {
             // After making a move, update the information of the cell using sensor
             this.sensor.run();
 
+            if(this.localMap.checkBatteryStation()){
+                this.battery += 10;
+            }
+
             boolean is_in_localmap = this.localMap.moveRobot(movement);
             // If is outside of the current localmap, build a new one
             if(!is_in_localmap && !this.virtualMap[x][y]){
@@ -179,8 +181,8 @@ public class Robot {
 
     public void createLocalMapVisual(){
         this.frame = new JFrame("LocalMap");
-        this.localMapVisual = new LocalMapVisual(this.localMap);
-        frame.add(localMapVisual);
+        this.localMapGUI = new LocalMapGUI(this.localMap);
+        frame.add(localMapGUI);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.pack();
         frame.setVisible(true);
@@ -188,7 +190,7 @@ public class Robot {
 
     public void localMapVisualRepaint(){
         this.frame.getContentPane().removeAll();
-        this.frame.add(new LocalMapVisual(this.localMap));
+        this.frame.add(new LocalMapGUI(this.localMap));
         frame.pack();
         this.frame.repaint();
     }
