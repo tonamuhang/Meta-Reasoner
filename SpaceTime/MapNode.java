@@ -1,6 +1,7 @@
 package SpaceTime;
 
 import Robot.Robot;
+import sun.awt.image.ImageWatched;
 
 import java.util.LinkedList;
 
@@ -12,12 +13,51 @@ public class MapNode {
     LinkedList<Robot.Movement> movements = null;
     String id;
     LinkedList<Edge> edgeList = null;
+    MapNode left = null;
+    MapNode right = null;
+    MapNode down = null;
+    MapNode up = null;
 
-    public MapNode(LocalMap localMap, LinkedList<Robot.Movement> movements){
+    public MapNode(LocalMap localMap){
         this.localMap = localMap;
-        this.movements = movements;
         this.id = localMap.id;
-        this.edgeList = new LinkedList<>();
+        this.movements = new LinkedList<>();
+    }
+
+    public MapNode(LocalMap localMap, MapNode previous, Robot.Movement movement){
+        this.localMap = localMap;
+        this.id = localMap.id;
+        this.movements = new LinkedList<>();
+
+        this.linkLocalMap(previous, movement);
+    }
+
+    public void linkLocalMap(MapNode node, Robot.Movement movement){
+        if(node.id.equals(this.id)){
+            System.out.println("you can't link to yourself");
+            return;
+        }
+
+        switch (movement){
+            case UP:
+                this.up = node;
+                break;
+            case DOWN:
+                this.down = node;
+                break;
+            case LEFT:
+                this.left = node;
+                break;
+            case RIGHT:
+                this.right = node;
+                break;
+        }
+    }
+
+    public void updateLocalMap(LocalMap localMap){
+        if(localMap.id.equals(this.id)){
+            this.localMap = localMap;
+        }
     }
 
     public LocalMap getLocalMap(){

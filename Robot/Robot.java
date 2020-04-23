@@ -1,8 +1,11 @@
 package Robot;
 
+import Robot.Reasoning.ActiveState;
+import SimulatedWorld.SimulatedWorld;
 import SpaceTime.*;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.LinkedList;
 
 public class Robot {
@@ -10,7 +13,9 @@ public class Robot {
         UP, DOWN, LEFT, RIGHT, ENTRY, EXIT
     }
 
-    protected boolean[][] virtualMap = null;   // Holds information about localmap landmarks
+
+
+//    protected boolean[][] virtualMap = null;   // Holds information about localmap landmarks
     protected LocalMap localMap = null;
     private WorldMap worldMap = null;
     private LinkedList<Movement> movements = null;
@@ -18,27 +23,47 @@ public class Robot {
     private Sensor sensor = null;
     private Thread sensorThread = null;
     JFrame frame = null;
+    Panel p = null;
     LocalMapGUI localMapGUI = null;
     private int localMapSize = 5;
-    public int battery = 100;
+
+//    public int battery;
+    public ActiveState activeState = null;
+
+    public int localMap_x;
+    public int localMap_y;
+
+    // Scores
+    public float left_score = 0;
+    public float right_score = 0;
+    public float down_score = 0;
+    public float up_score = 0;
+
+
+    // Movement types
+    Movement[] movement_option = new Movement[]{Movement.UP, Movement.DOWN, Movement.LEFT, Movement.RIGHT};
 
     public Robot(int memory){
         this.memory = memory;
-        this.virtualMap = new boolean[memory][memory];
+//        this.virtualMap = new boolean[memory][memory];
         this.x = memory/2;
         this.y = memory/2;
         this.worldMap = new WorldMap();
         this.sensor = new Sensor(this);
 
+        this.activeState = new ActiveState();
 
-        for(int i = 0; i < memory; i++){
-            for(int j = 0; j < memory; j++){
-                this.virtualMap[i][j] = false;
-            }
-        }
+//        for(int i = 0; i < memory; i++){
+//            for(int j = 0; j < memory; j++){
+//                this.virtualMap[i][j] = false;
+//            }
+//        }
 
         this.buildLocalMap(this.localMapSize);  // Change localMap size here
+        localMap_x = this.localMap.x;
+        localMap_y = this.localMap.y;
 
+        this.worldMap.addNode(new MapNode(this.localMap));
 //        sensorThread = new Thread(this.sensor);
 //        sensorThread.start();
     }
@@ -51,11 +76,14 @@ public class Robot {
     public void buildLocalMap(int size){
         // Instantiate the localmap and add references to the virtual map.
         this.localMap = new LocalMap(size, this.x, this.y);
-        this.virtualMap[x][y] = true;
+//        this.virtualMap[x][y] = true;
 
         // Initialize the movements list within the localmap.
         this.movements = new LinkedList<>();
         this.movements.add(Movement.ENTRY);
+
+        localMap_x = this.localMap.x;
+        localMap_y = this.localMap.y;
 
         System.out.println("Built localmap " + localMap.id);
     }
@@ -64,9 +92,10 @@ public class Robot {
 
 
     public boolean validateMove(Movement movement){
-        if(this.battery <= 0){
+        if(activeState.getBattery() <= 0){
             return false;
         }
+
         switch (movement){
             case UP:
                 if(this.x>0) {
@@ -96,7 +125,9 @@ public class Robot {
     }
 
 
+
     public boolean makeMove(Movement movement){
+
         if(validateMove(movement)){
             switch (movement){
                 case UP:
@@ -121,79 +152,267 @@ public class Robot {
                 default:
                     break;
             }
+//            // Check in the local map if the robot should be on a battery station
+//            if(this.localMap.onBattery()){
+//                this.activeState.setBattery(this.activeState.getBattery() + 10);
+//            }
+
+
+
             // After making a move, update the information of the cell using sensor
+
             this.sensor.run();
 
-            if(this.localMap.checkBatteryStation()){
-                this.battery += 10;
-            }
+//            if(this.localMap.checkBatteryStation()){
+////                this.battery += 10;
+//                ActiveState.setBattery(ActiveState.getBattery() + 10);
+//            }
 
-            boolean is_in_localmap = this.localMap.moveRobot(movement);
-            // If is outside of the current localmap, build a new one
-            if(!is_in_localmap && !this.virtualMap[x][y]){
-                MapNode start = exitLocalMap();
 
-                // Build a new local map, and connect the two local maps
-                this.buildLocalMap(this.localMapSize);
-                this.virtualMap[x][y] = true;
-                MapNode end = new MapNode(this.localMap, this.movements);
-                this.worldMap.addEdge(start, end);
-            }
-            // If it is a landmark and is a different localmap,
-            // exit the current local map, and retrieve a localmap from the worldmap.
-            else if(this.virtualMap[x][y]){
-                if(!this.localMap.id.equals(x+"_"+y)) {
+            boolean is_in_localmap = this.localMap.moveRobot(movement, this);
+            // If is outside of the current localmap, exit the current localmap
+            // and move to a new one. if a local map doesn't exist, build one
+            if(!is_in_localmap){
+                //TODO: Fix error handling here
+                try {
                     exitLocalMap();
-                    this.localMap = this.worldMap.getLocalMap(this.x, this.y);
-
-                    // Initialize the movement list
-                    this.movements = new LinkedList<>();
-                    this.movements.add(Movement.ENTRY);
-                    System.out.println("retrieved " + this.localMap.id);
-
-                    this.worldMap.printLocalMapConnection(this.localMap);
+                }
+                catch (Exception e){
+                    e.printStackTrace();
                 }
             }
-            // If not landmark and within the current localmap, do nothing
 
-            this.battery -= 1;
+            // Calculate score in different positions
+            for(Movement move : movement_option){
+                float score = StateValidator.validate(this, new Robot(copyRobot()), move);
+                switch (move){
+                    case RIGHT:
+                        this.right_score = score;
+                        break;
+                    case LEFT:
+                        this.left_score = score;
+                        break;
+                    case DOWN:
+                        this.down_score = score;
+                        break;
+                    case UP:
+                        this.up_score = score;
+                        break;
+                }
+            }
+            scoreRepaint();
+
+//            this.battery -= 1;
+//            ActiveState.setBattery(ActiveState.getBattery() - 1);
             return true;
         }
         return false;
     }
 
+    public boolean evalutateMove(Movement movement){
+//        System.out.println(validateMove(movement));
+        if(validateMove(movement)) {
+            switch (movement) {
+                case UP:
+                    this.x -= 1;
+                    this.movements.add(Movement.UP);
+                    break;
+                case DOWN:
+                    this.x += 1;
+                    this.movements.add(Movement.DOWN);
+                    break;
+                case LEFT:
+                    this.y -= 1;
+                    this.movements.add(Movement.LEFT);
+                    break;
+                case RIGHT:
+                    this.y += 1;
+                    this.movements.add(Movement.RIGHT);
+                    break;
+                default:
+                    break;
+            }
+
+            boolean is_in_localmap = this.localMap.moveRobot(movement, this);
+
+            // Check in the local map if the robot should be on a battery station
+            if(is_in_localmap) {
+                if (this.localMap.onBattery(this)) {
+                    this.activeState.setBattery(this.activeState.getBattery() + 10);
+                }
+            }
+
+            this.activeState.setBattery(this.activeState.getBattery() - 1);
+
+
+//            // If is outside of the current localmap, exit the current localmap
+//            // and move to a new one. if a local map doesn't exist, build one
+//
+//            if(!is_in_localmap){
+//                try {
+//                    exitLocalMap();
+//                }
+//                catch (Exception e){
+//                    e.getMessage();
+//                }
+//            }
+
+            return true;
+        }
+        return false;
+    }
 
     /**
      * Exit the current localmap and add it to the worldmap
      * @return The current localmap as a mapnode.
      */
-    public MapNode exitLocalMap(){
+    public void exitLocalMap() throws Exception {
         LocalMap old_local = this.localMap;
+        Movement movement = this.movements.getLast();
+
         this.movements.add(Movement.EXIT);
-        MapNode start = new MapNode(old_local, this.movements);
-        this.worldMap.addNode(start);
-        System.out.println("Added localmap " + this.localMap.id + " to worldmap");
         this.printMovements();
 
-        return start;
+        // If the local map has a corresponding neighbor, move to it and update memory
+        if(this.worldMap.hasNeighbor(this.localMap, movement)){
+            this.worldMap.updateLocalMap(this.localMap);
+            System.out.println("Updated localmap " + this.localMap.id);
+            this.localMap = this.worldMap.getLocalMap(this.localMap, movement).enterLocalMap(this);
+            this.movements = new LinkedList<>();
+
+        }
+        else{
+            // Create a new local map
+            this.buildLocalMap(this.localMapSize);
+            SimulatedWorld.markLocalMap();  // Mark in the simulated world, just for visual marks
+
+            System.out.println("Added localmap " + this.localMap.id + " to worldmap");
+            this.worldMap.addLocalMap(old_local, this.localMap, movement);
+
+        }
+        System.out.println("Moved to localmap " + this.localMap.id);
+        System.out.println();
+        this.worldMap.printNeighbors(this.localMap);
+
+
+
     }
 
 
     public void createLocalMapVisual(){
         this.frame = new JFrame("LocalMap");
+        p = new Panel();
+        p.setLayout(new BorderLayout());
         this.localMapGUI = new LocalMapGUI(this.localMap);
-        frame.add(localMapGUI);
+        LayoutManager overlay = new OverlayLayout(localMapGUI);
+        localMapGUI.setLayout(overlay);
+
+        // score
+        JLabel score_1 = new JLabel(""+ left_score);
+        score_1.setForeground(Color.BLACK);
+        p.add(score_1, BorderLayout.WEST);
+
+        JLabel score_2 = new JLabel(""+ up_score, SwingConstants.CENTER);
+        score_2.setForeground(Color.BLACK);
+        p.add(score_2, BorderLayout.NORTH);
+
+        JLabel score_3 = new JLabel(""+ right_score);
+        score_3.setForeground(Color.BLACK);
+        p.add(score_3, BorderLayout.EAST);
+
+        JLabel score_4 = new JLabel(""+ down_score, SwingConstants.CENTER);
+        score_4.setForeground(Color.BLACK);
+        p.add(score_4, BorderLayout.SOUTH);
+
+
+
+        // Localmap gui
+        p.add(localMapGUI, BorderLayout.CENTER);
+        frame.add(p);
+
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.pack();
         frame.setVisible(true);
     }
 
+
+
     public void localMapVisualRepaint(){
-        this.frame.getContentPane().removeAll();
-        this.frame.add(new LocalMapGUI(this.localMap));
+//        this.frame.getContentPane().removeAll();
+        for(Component c : this.p.getComponents()){
+            if(c instanceof JPanel){
+                p.remove(c);
+            }
+        }
+
+
+//        Panel p = new Panel();
+//        p = new Panel();
+//        p.setLayout(new BorderLayout());
+
+
+        this.localMapGUI = new LocalMapGUI(this.localMap);
+        LayoutManager overlay = new OverlayLayout(localMapGUI);
+        localMapGUI.setLayout(overlay);
+
+//        // score
+//        JLabel score_1 = new JLabel(""+ left_score);
+//        score_1.setForeground(Color.BLACK);
+//        p.add(score_1, BorderLayout.WEST);
+//
+//        JLabel score_2 = new JLabel(""+ up_score, SwingConstants.CENTER);
+//        score_2.setForeground(Color.BLACK);
+//        p.add(score_2, BorderLayout.NORTH);
+//
+//        JLabel score_3 = new JLabel(""+ right_score);
+//        score_3.setForeground(Color.BLACK);
+//        p.add(score_3, BorderLayout.EAST);
+//
+//        JLabel score_4 = new JLabel(""+ down_score, SwingConstants.CENTER);
+//        score_4.setForeground(Color.BLACK);
+//        p.add(score_4, BorderLayout.SOUTH);
+
+
+
+        p.add(localMapGUI, BorderLayout.CENTER);
+        this.frame.add(p);
         frame.pack();
         this.frame.repaint();
+
+
     }
+
+    public void scoreRepaint(){
+        for(Component c : this.p.getComponents()){
+            if(c instanceof JLabel){
+                this.p.remove(c);
+            }
+        }
+
+        // score
+        JLabel score_1 = new JLabel(""+ left_score);
+        score_1.setForeground(Color.BLACK);
+        p.add(score_1, BorderLayout.WEST);
+
+        JLabel score_2 = new JLabel(""+ up_score, SwingConstants.CENTER);
+        score_2.setForeground(Color.BLACK);
+        p.add(score_2, BorderLayout.NORTH);
+
+        JLabel score_3 = new JLabel(""+ right_score);
+        score_3.setForeground(Color.BLACK);
+        p.add(score_3, BorderLayout.EAST);
+
+        JLabel score_4 = new JLabel(""+ down_score, SwingConstants.CENTER);
+        score_4.setForeground(Color.BLACK);
+        p.add(score_4, BorderLayout.SOUTH);
+
+        this.frame.revalidate();
+        this.frame.repaint();
+
+    }
+
+
+
 
     public void localMapVisualDispose(){
         this.frame.setVisible(false);
@@ -218,4 +437,25 @@ public class Robot {
         }
         System.out.println(sb.toString());
     }
+
+    public Robot(Robot robot){
+        this.localMap = new LocalMap(robot.localMap);
+        this.worldMap = new WorldMap(robot.worldMap);
+        this.activeState =  robot.activeState.clone();
+        this.movements = new LinkedList<>();
+        this.movements.addAll(robot.movements);
+        this.x = robot.x;
+        this.y = robot.y;
+        this.memory = robot.memory;
+        this.localMap_x = robot.localMap_x;
+        this.localMap_y = robot.localMap_y;
+
+    }
+    private Robot copyRobot(){
+        return new Robot(this);
+    }
+
+
+
+
 }

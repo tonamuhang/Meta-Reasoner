@@ -1,11 +1,13 @@
 package SimulatedWorld;
 
+import Robot.Reasoning.ActiveState;
 import Robot.Robot;
 import SpaceTime.Cell;
 import SpaceTime.Item;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.dnd.DropTarget;
 import java.util.Random;
 import java.util.Scanner;
 
@@ -13,6 +15,7 @@ public class SimulatedWorld extends JPanel{
     public static final Color plain = new Color(255, 255, 255);
     public static final Color robot_color = new Color(255, 0, 0);
     public static final Color battery = new Color(0, 255, 0);
+    public static final Color localMap_point = new Color(0, 0, 255);
 
     public static int row = 20;
     public static int col = 20;
@@ -23,6 +26,11 @@ public class SimulatedWorld extends JPanel{
     public static int robot_x = 0;
     public static int robot_y = 0;
 
+    private static boolean mark_local = false;
+
+    /*** Robot's physical states***/
+    public static ActiveState activeState = null;
+
     public SimulatedWorld(Cell[][] worldGrid){
         SimulatedWorld.worldGrid = worldGrid;
         row = worldGrid.length;
@@ -31,6 +39,7 @@ public class SimulatedWorld extends JPanel{
         Random rand = new Random();
         robot_x = rand.nextInt(20);
         robot_y = rand.nextInt(20);
+        activeState = new ActiveState();
 
         int width = col * PREFERRED_GRID_SIZE_PIXELS;
         int height = row * PREFERRED_GRID_SIZE_PIXELS;
@@ -58,6 +67,9 @@ public class SimulatedWorld extends JPanel{
                 }
                 else if(worldGrid[i][j].containsBattery()){
                     terrainColor = battery;
+                }
+                else if(worldGrid[i][j].is_localmap){
+                    terrainColor = localMap_point;
                 }
 
                 g.setColor(terrainColor);
@@ -98,7 +110,7 @@ public class SimulatedWorld extends JPanel{
         SimulatedWorld map = new SimulatedWorld(simulatedWorld);
         LayoutManager overlay = new OverlayLayout(map);
         map.setLayout(overlay);
-
+        worldGrid[robot_x][robot_y].is_localmap = true;
 
 
 
@@ -106,7 +118,7 @@ public class SimulatedWorld extends JPanel{
         Robot robot = new Robot(100);
         robot.createLocalMapVisual();
 
-        JLabel battery = new JLabel(""+ robot.battery);
+        JLabel battery = new JLabel(""+ activeState.getBattery());
         battery.setForeground(Color.BLACK);
         battery.setAlignmentX(0);
         battery.setAlignmentY(0);
@@ -121,9 +133,12 @@ public class SimulatedWorld extends JPanel{
         String direction = "";
         boolean flag = true;
         int counter = 20;
+
         while(flag){
+            battery.setText(activeState.getBattery()+"");
             direction = scanner.nextLine();
             Robot.Movement movement = null;
+//            robot.scoreRepaint();
 
             switch (direction){
                 case "w":
@@ -144,9 +159,15 @@ public class SimulatedWorld extends JPanel{
                     break;
             }
 
+
             if(movement != null) {
+
                 if(validateMove(movement) ){
-                    if(robot.makeMove(movement)) {
+                    if(robot.validateMove(movement)) {
+                        activeState.setBattery(activeState.getBattery() - 1);
+
+
+                        robot.makeMove(movement);
                         switch (movement) {
                             case UP:
                                 robot_x -= 1;
@@ -163,7 +184,15 @@ public class SimulatedWorld extends JPanel{
                             default:
                                 break;
                         }
-                        battery.setText(robot.battery+"");
+                        if(mark_local){
+                            mark_local = false;
+                            worldGrid[robot_x][robot_y].is_localmap = true;
+                        }
+                        if(worldGrid[robot_x][robot_y].containsBattery()){
+                            activeState.setBattery(activeState.getBattery() + 10);
+                        }
+
+
                     }
                 }
 
@@ -202,5 +231,8 @@ public class SimulatedWorld extends JPanel{
         return worldGrid[robot_x][robot_y];
     }
 
+    public static void markLocalMap(){
+        mark_local = true;
+    }
 
 }

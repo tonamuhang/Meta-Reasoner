@@ -5,6 +5,17 @@ import java.util.ArrayList;
 public class Cell {
     int x, y;
     ArrayList<Item> items = null;
+    public Boolean is_localmap = false;
+    public double temperature;
+
+    public Cell(Cell cell){
+        this.x = cell.x;
+        this.y = cell.y;
+        this.is_localmap = cell.is_localmap;
+        this.temperature = cell.temperature;
+        this.items = new ArrayList<>();
+        this.items.addAll(cell.items);
+    }
 
     public Cell(int x, int y){
         this.x = x;

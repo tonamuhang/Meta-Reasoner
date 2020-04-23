@@ -1,6 +1,7 @@
 package Robot;
 
 
+import Robot.Reasoning.ActiveState;
 import SimulatedWorld.SimulatedWorld;
 import SpaceTime.Cell;
 
@@ -15,9 +16,8 @@ public class Sensor implements Runnable {
         if (this.robot != null) {
             Cell cell = SimulatedWorld.getCell();
             this.robot.localMap.updateCell(cell);
+            this.robot.activeState = SimulatedWorld.activeState;
         }
-
-
     }
 
 }
