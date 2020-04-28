@@ -69,6 +69,8 @@ public class WorldMap {
         }
     }
 
+
+    // Check if a given localmap has a neighbor
     public boolean hasNeighbor(LocalMap start, Robot.Movement movement) throws Exception {
         for(MapNode mapNode : this.mapNodes){
             if(mapNode.id.equals(start.id)){

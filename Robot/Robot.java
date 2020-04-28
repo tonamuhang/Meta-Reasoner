@@ -13,35 +13,32 @@ public class Robot {
         UP, DOWN, LEFT, RIGHT, ENTRY, EXIT
     }
 
-
-
-//    protected boolean[][] virtualMap = null;   // Holds information about localmap landmarks
-    protected LocalMap localMap = null;
+    LocalMap localMap = null;
     private WorldMap worldMap = null;
     private LinkedList<Movement> movements = null;
-    protected int x, y, memory;
+    private int x, y, memory;
     private Sensor sensor = null;
     private Thread sensorThread = null;
-    JFrame frame = null;
-    Panel p = null;
-    LocalMapGUI localMapGUI = null;
+    private JFrame frame = null;
+    private Panel p = null;
+    private LocalMapGUI localMapGUI = null;
     private int localMapSize = 5;
 
 //    public int battery;
-    public ActiveState activeState = null;
+    ActiveState activeState = null;
 
     public int localMap_x;
     public int localMap_y;
 
     // Scores
-    public float left_score = 0;
-    public float right_score = 0;
-    public float down_score = 0;
-    public float up_score = 0;
+    private float left_score = 0;
+    private float right_score = 0;
+    private float down_score = 0;
+    private float up_score = 0;
 
 
     // Movement types
-    Movement[] movement_option = new Movement[]{Movement.UP, Movement.DOWN, Movement.LEFT, Movement.RIGHT};
+    private Movement[] movement_option = new Movement[]{Movement.UP, Movement.DOWN, Movement.LEFT, Movement.RIGHT};
 
     public Robot(int memory){
         this.memory = memory;
@@ -73,7 +70,7 @@ public class Robot {
      * Build a localMap that has its origin at the robot's current location
      * @param size The size of the desired LocalMap
      */
-    public void buildLocalMap(int size){
+    private void buildLocalMap(int size){
         // Instantiate the localmap and add references to the virtual map.
         this.localMap = new LocalMap(size, this.x, this.y);
 //        this.virtualMap[x][y] = true;
@@ -89,8 +86,11 @@ public class Robot {
     }
 
 
-
-
+    /**
+     * Validate if a given move is acceptable
+     * @param movement
+     * @return true if the given move is accepted, false if not
+     */
     public boolean validateMove(Movement movement){
         if(activeState.getBattery() <= 0){
             return false;
@@ -125,7 +125,11 @@ public class Robot {
     }
 
 
-
+    /**
+     * Move the robot by the given movement.
+     * @param movement
+     * @return True if the movement was successfully made.
+     */
     public boolean makeMove(Movement movement){
 
         if(validateMove(movement)){
@@ -152,22 +156,9 @@ public class Robot {
                 default:
                     break;
             }
-//            // Check in the local map if the robot should be on a battery station
-//            if(this.localMap.onBattery()){
-//                this.activeState.setBattery(this.activeState.getBattery() + 10);
-//            }
-
-
 
             // After making a move, update the information of the cell using sensor
-
             this.sensor.run();
-
-//            if(this.localMap.checkBatteryStation()){
-////                this.battery += 10;
-//                ActiveState.setBattery(ActiveState.getBattery() + 10);
-//            }
-
 
             boolean is_in_localmap = this.localMap.moveRobot(movement, this);
             // If is outside of the current localmap, exit the current localmap
@@ -209,7 +200,13 @@ public class Robot {
         return false;
     }
 
-    public boolean evalutateMove(Movement movement){
+
+    /**
+     * Used ONLY by a copy of the robot to evaluate the score of the state.
+     * @param movement
+     * @return true if the movement was successfully made by the robot copy
+     */
+    boolean evalutateMove(Movement movement){
 //        System.out.println(validateMove(movement));
         if(validateMove(movement)) {
             switch (movement) {
@@ -247,16 +244,6 @@ public class Robot {
 
 //            // If is outside of the current localmap, exit the current localmap
 //            // and move to a new one. if a local map doesn't exist, build one
-//
-//            if(!is_in_localmap){
-//                try {
-//                    exitLocalMap();
-//                }
-//                catch (Exception e){
-//                    e.getMessage();
-//                }
-//            }
-
             return true;
         }
         return false;
@@ -266,7 +253,7 @@ public class Robot {
      * Exit the current localmap and add it to the worldmap
      * @return The current localmap as a mapnode.
      */
-    public void exitLocalMap() throws Exception {
+    private void exitLocalMap() throws Exception {
         LocalMap old_local = this.localMap;
         Movement movement = this.movements.getLast();
 
@@ -299,6 +286,10 @@ public class Robot {
     }
 
 
+    // No logic below. Only GUI
+    /**
+     * GUI
+     */
     public void createLocalMapVisual(){
         this.frame = new JFrame("LocalMap");
         p = new Panel();
@@ -355,25 +346,6 @@ public class Robot {
         LayoutManager overlay = new OverlayLayout(localMapGUI);
         localMapGUI.setLayout(overlay);
 
-//        // score
-//        JLabel score_1 = new JLabel(""+ left_score);
-//        score_1.setForeground(Color.BLACK);
-//        p.add(score_1, BorderLayout.WEST);
-//
-//        JLabel score_2 = new JLabel(""+ up_score, SwingConstants.CENTER);
-//        score_2.setForeground(Color.BLACK);
-//        p.add(score_2, BorderLayout.NORTH);
-//
-//        JLabel score_3 = new JLabel(""+ right_score);
-//        score_3.setForeground(Color.BLACK);
-//        p.add(score_3, BorderLayout.EAST);
-//
-//        JLabel score_4 = new JLabel(""+ down_score, SwingConstants.CENTER);
-//        score_4.setForeground(Color.BLACK);
-//        p.add(score_4, BorderLayout.SOUTH);
-
-
-
         p.add(localMapGUI, BorderLayout.CENTER);
         this.frame.add(p);
         frame.pack();
@@ -382,7 +354,7 @@ public class Robot {
 
     }
 
-    public void scoreRepaint(){
+    private void scoreRepaint(){
         for(Component c : this.p.getComponents()){
             if(c instanceof JLabel){
                 this.p.remove(c);
@@ -412,8 +384,6 @@ public class Robot {
     }
 
 
-
-
     public void localMapVisualDispose(){
         this.frame.setVisible(false);
         this.frame.dispose();
@@ -425,7 +395,7 @@ public class Robot {
         }
     }
 
-    public void printMovements(){
+    private void printMovements(){
         StringBuilder sb = new StringBuilder("Moves taken in the localmap: ");
         for(Movement movement : this.movements){
             if(movement.toString().equals("ENTRY")){

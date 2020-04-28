@@ -32,6 +32,12 @@ public class MapNode {
         this.linkLocalMap(previous, movement);
     }
 
+
+    /**
+     * Link the mapnode with the given mapnode to the cardinal direction
+     * @param node
+     * @param movement
+     */
     public void linkLocalMap(MapNode node, Robot.Movement movement){
         if(node.id.equals(this.id)){
             System.out.println("you can't link to yourself");
